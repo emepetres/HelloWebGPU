@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 
-# Builds the Emscripten implementation (on Windows)
-# TODO: CMake...
+EMSDK=$HOME/mono/sdks/builds/toolchains/emsdk
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -13,6 +12,11 @@ case $key in
     -d|--debug)
     EM_DEBUG="true"
     shift # past argument
+    ;;
+    -emsdk|--emsdk)
+    EMSDK="$2"
+    shift # past argument
+    shift # past value
     ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
@@ -39,7 +43,7 @@ else
 fi
 
 for file in src/*.cpp; do
-  SRC=$SRC" $file"
+  SRCs=$SRCs" $file"
 done
 
 INC=-Iinclude
@@ -47,9 +51,9 @@ INC=-Iinclude
 OUT=www/index
 mkdir -p www
 
-source $HOME/mono/sdks/wasm/emsdk_env.sh
+source $EMSDK/emsdk_env.sh
 
-emcc $CPP_FLAGS $OPT_FLAGS $EMS_FLAGS $INC $SRC -o $OUT.html
+emcc $CPP_FLAGS $OPT_FLAGS $EMS_FLAGS $INC $SRCs -o $OUT.html
 if [ -z ${EM_DEBUG} ]; then
   $EMSDK/upstream/bin/wasm-opt $OPT_FLAGS --converge $OUT.wasm -o $OUT.wasm
 fi

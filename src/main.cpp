@@ -55,7 +55,6 @@ static void createPipelineAndBuffers()
   // pipeline layout (used by the render pipeline, released after its creation)
   WGPUPipelineLayoutDescriptor layoutDesc = {};
   layoutDesc.bindGroupLayoutCount = 0;
-  //layoutDesc.bindGroupLayouts = &bindGroupLayout;
   WGPUPipelineLayout pipelineLayout = wgpuDeviceCreatePipelineLayout(device, &layoutDesc);
 
   // begin pipeline set-up
