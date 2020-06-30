@@ -3,6 +3,8 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/html5_webgpu.h>
 
+#include <shaders.h>
+
 WGPUDevice device;
 WGPUQueue queue;
 WGPUSwapChain swapchain;
@@ -46,9 +48,46 @@ static WGPUSwapChain createSwapChain(WGPUDevice device)
  */
 static void createPipelineAndBuffers()
 {
+  // Shader modules
+  WGPUShaderModule vertMod = createSPIRVShaderModule(device, triangle_vert.data(), triangle_vert.size());
+  WGPUShaderModule fragMod = createSPIRVShaderModule(device, triangle_frag.data(), triangle_frag.size());
+
+  // pipeline layout (used by the render pipeline, released after its creation)
+  WGPUPipelineLayoutDescriptor layoutDesc = {};
+  layoutDesc.bindGroupLayoutCount = 0;
+  //layoutDesc.bindGroupLayouts = &bindGroupLayout;
+  WGPUPipelineLayout pipelineLayout = wgpuDeviceCreatePipelineLayout(device, &layoutDesc);
+
+  // begin pipeline set-up
+  WGPURenderPipelineDescriptor desc = {};
+
+  desc.layout = pipelineLayout;
+
+  desc.vertexStage.module = vertMod;
+  desc.vertexStage.entryPoint = "main";
+
+  WGPUProgrammableStageDescriptor fragStage = {};
+  fragStage.module = fragMod;
+  fragStage.entryPoint = "main";
+  desc.fragmentStage = &fragStage;
+
+  desc.primitiveTopology = WGPUPrimitiveTopology_TriangleList;
+
+  WGPUColorStateDescriptor colorDesc = {};
+  colorDesc.format = getSwapChainFormat();
+  desc.colorStateCount = 1;
+  desc.colorStates = &colorDesc;
+
+  pipeline = wgpuDeviceCreateRenderPipeline(device, &desc);
+
+  // clean-up
+  wgpuPipelineLayoutRelease(pipelineLayout);
+
+  wgpuShaderModuleRelease(fragMod);
+  wgpuShaderModuleRelease(vertMod);
 }
 
-static bool redraw()
+static bool frame()
 {
   printf("hello, world!\n");
   return true;
@@ -56,7 +95,7 @@ static bool redraw()
 
 void em_draw()
 {
-  if (redraw() == false)
+  if (frame() == false)
   {
     emscripten_cancel_main_loop();
   }

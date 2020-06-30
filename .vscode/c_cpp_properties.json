@@ -3,7 +3,7 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
+                "${workspaceFolder}/include/**",
                 "${env:HOME}/mono/sdks/builds/toolchains/emsdk/upstream/emscripten/system/include/**"
             ],
             "defines": [

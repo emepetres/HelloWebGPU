@@ -42,7 +42,7 @@ for file in src/*.cpp; do
   SRC=$SRC" $file"
 done
 
-INC=-Iinc
+INC=-Iinclude
 
 OUT=www/index
 mkdir -p www
