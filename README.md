@@ -1,6 +1,18 @@
 # HelloWebGPU
 
-This a bare minimum test that shows how to draw a red triangle in the web using WebGPU and WebAssembly (Emscripten)
+This a bare minimum test that shows how to draw a red triangle in a web browser using WebGPU and WebAssembly (Emscripten)
+
+![Triangle rendered on Chrome Canary](screenshot.png)
+
+Tested with Chrome Canary 86.0 and Microsoft Edge Canary 85.0 with `chrome://flags/#enable-unsafe-webgpu` enabled, and with Firefox Nightly 80.0a1 with `dom.webgpu.enabled` and `gfx.webrender.all` enabled,
+
+## Requirements
+
+* [Emscripten SDK](https://github.com/emscripten-core/emsdk).
+* Optional: python 3 to serve the sample.
+* Optional: [Shaderc](https://github.com/google/shaderc) to compile the shaders.
+
+The sample is built under linux/WSL, however it should work in Windows or Mac as well by translating the build script to each platform.
 
 ## Build
 
@@ -16,12 +28,12 @@ To compile the shaders:
 `glslc -Os -mfmt=num -o - -c in.vert`
 `glslc -Os -mfmt=num -o - -c in.frag`
 
-## Requirements
+## Run
 
-* [Emscripten SDK](https://github.com/emscripten-core/emsdk)
-* Optional: [Shaderc](https://github.com/google/shaderc) to compile the shaders.
-
-The sample is tested on linux, however it should work in Windows or Mac as well by translating the bash script to each platform.
+```bash
+cd www
+python server.py
+```
 
 ## Related work
 
