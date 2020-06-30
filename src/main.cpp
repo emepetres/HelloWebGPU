@@ -44,13 +44,13 @@ static WGPUSwapChain createSwapChain(WGPUDevice device)
 }
 
 /**
- * Bare minimum pipeline to draw a triangle using the above shaders.
+ * Bare minimum pipeline to draw a triangle using the shaders.
  */
 static void createPipelineAndBuffers()
 {
   // Shader modules
-  WGPUShaderModule vertMod = createSPIRVShaderModule(device, triangle_vert.data(), triangle_vert.size());
-  WGPUShaderModule fragMod = createSPIRVShaderModule(device, triangle_frag.data(), triangle_frag.size());
+  WGPUShaderModule vertMod = createSPIRVShaderModule(device, triangle_vert.data(), triangle_vert.size() * sizeof(triangle_vert[0]));
+  WGPUShaderModule fragMod = createSPIRVShaderModule(device, triangle_frag.data(), triangle_frag.size() * sizeof(triangle_frag[0]));
 
   // pipeline layout (used by the render pipeline, released after its creation)
   WGPUPipelineLayoutDescriptor layoutDesc = {};
@@ -73,10 +73,23 @@ static void createPipelineAndBuffers()
 
   desc.primitiveTopology = WGPUPrimitiveTopology_TriangleList;
 
+  desc.sampleCount = 1;
+
+  // describe blend
+  WGPUBlendDescriptor blendDesc = {};
+  blendDesc.operation = WGPUBlendOperation_Add;
+  blendDesc.srcFactor = WGPUBlendFactor_SrcAlpha;
+  blendDesc.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
   WGPUColorStateDescriptor colorDesc = {};
   colorDesc.format = getSwapChainFormat();
+  colorDesc.alphaBlend = blendDesc;
+  colorDesc.colorBlend = blendDesc;
+  colorDesc.writeMask = WGPUColorWriteMask_All;
+
   desc.colorStateCount = 1;
   desc.colorStates = &colorDesc;
+
+  desc.sampleMask = 0xFFFFFFFF; //<-- Note: this currently causes Emscripten to fail (sampleMask ends up as -1, which trips an assert)
 
   pipeline = wgpuDeviceCreateRenderPipeline(device, &desc);
 
@@ -89,7 +102,31 @@ static void createPipelineAndBuffers()
 
 static bool frame()
 {
-  printf("hello, world!\n");
+  WGPUTextureView textureView = wgpuSwapChainGetCurrentTextureView(swapchain);
+  WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(device, nullptr);
+
+  WGPURenderPassColorAttachmentDescriptor colorDesc = {};
+  colorDesc.attachment = textureView;
+
+  WGPURenderPassDescriptor passDesc = {};
+  passDesc.colorAttachmentCount = 1;
+  passDesc.colorAttachments = &colorDesc;
+
+  WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(commandEncoder, &passDesc);
+
+  wgpuRenderPassEncoderSetPipeline(pass, pipeline);
+  wgpuRenderPassEncoderDraw(pass, 3, 1, 0, 0);
+  wgpuRenderPassEncoderEndPass(pass);
+  wgpuRenderPassEncoderRelease(pass);
+
+  WGPUCommandBuffer commands = wgpuCommandEncoderFinish(commandEncoder, nullptr);
+  wgpuCommandEncoderRelease(commandEncoder);
+
+  wgpuQueueSubmit(queue, 1, &commands);
+  wgpuCommandBufferRelease(commands);
+
+  wgpuTextureViewRelease(textureView);
+
   return true;
 }
 
